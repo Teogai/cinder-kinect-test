@@ -5,6 +5,7 @@
 
 #include "Kinect2.h"
 
+using namespace Kinect2;
 class BasicApp : public ci::app::AppBasic 
 {
 public:
@@ -12,6 +13,9 @@ public:
 	void						prepareSettings( ci::app::AppBasic::Settings* settings );
 	void						setup();
 	void						update();
+	void						getHands();
+	void						drawHands();
+
 private:
 	Kinect2::DeviceRef			mDevice;
 	Kinect2::Frame				mFrame;
@@ -19,6 +23,9 @@ private:
 	float						mFrameRate;
 	bool						mFullScreen;
 	ci::params::InterfaceGlRef	mParams;
+
+	Kinect2::Body::Joint handRight, thumbRight, handLeft, thumbLeft;
+
 };
 
 #include "cinder/Font.h"
@@ -33,7 +40,23 @@ void BasicApp::draw()
 	gl::clear();
 	gl::setMatricesWindow( getWindowSize() );
 	gl::enableAlphaBlending();
+	/*
+	if (mFrame.getColor()) {
+		gl::TextureRef tex = gl::Texture::create(mFrame.getColor());
+		gl::draw(tex, tex->getBounds(), Rectf(Vec2f::zero(), getWindowSize()));
+		drawHands();
+	}
+	*/
+	if (mFrame.getBodyIndex()) {
+		gl::TextureRef tex = gl::Texture::create(Kinect2::colorizeBodyIndex(mFrame.getBodyIndex()));
+		gl::draw(tex, tex->getBounds(), Rectf(Vec2f::zero(), Vec2f(getWindowSize())));
+	}
 	
+	//if (){
+		drawHands();
+	//}
+	//Draw 4 Frames
+	/*
 	if ( mFrame.getColor() ) {
 		gl::TextureRef tex = gl::Texture::create( mFrame.getColor() );
 		gl::draw( tex, tex->getBounds(), Rectf( Vec2f::zero(), getWindowCenter() ) );
@@ -50,6 +73,7 @@ void BasicApp::draw()
 		gl::TextureRef tex = gl::Texture::create( Kinect2::colorizeBodyIndex( mFrame.getBodyIndex() ) );
 		gl::draw( tex, tex->getBounds(), Rectf( getWindowCenter(), Vec2f( getWindowSize() ) ) );
 	}
+	*/
 
 	mParams->draw();
 }
@@ -74,6 +98,7 @@ void BasicApp::setup()
 	mParams->addParam( "Frame rate",	&mFrameRate,				"", true );
 	mParams->addParam( "Full screen",	&mFullScreen,				"key=f" );
 	mParams->addButton( "Quit", bind(	&BasicApp::quit, this ),	"key=q" );
+
 }
 
 void BasicApp::update()
@@ -88,7 +113,35 @@ void BasicApp::update()
 	if ( mDevice && mDevice->getFrame().getTimeStamp() > mFrame.getTimeStamp() ) {
 		mFrame = mDevice->getFrame();
 	}
+
+	getHands();
 }
 
 CINDER_APP_BASIC( BasicApp, RendererGl )
 	
+void BasicApp::getHands(){
+	if (mFrame.getBodyIndex())
+	{
+		vector<Body> vBodies = mFrame.getBodies();
+		console() << vBodies.size() << std::endl;
+		for (size_t i = 0; i < vBodies.size();i++){
+			Body body = vBodies[i];
+			if (body.isTracked())
+			{
+				// Find the joints
+				handRight = body.getJointMap().at(JointType_HandRight);
+				thumbRight = body.getJointMap().at(JointType_ThumbRight);
+
+				handLeft = body.getJointMap().at(JointType_HandLeft);
+				thumbLeft = body.getJointMap().at(JointType_ThumbLeft);
+			}
+		}
+	}
+}
+
+
+void BasicApp::drawHands(){
+	gl::color(255, 255, 255);
+	gl::drawSolidCircle(Vec2f(handRight.getPosition().x, handRight.getPosition().y), 10);
+}
+
