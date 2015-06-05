@@ -36,6 +36,16 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+struct Hand{
+	Body::Joint joint;
+	HandState state;
+
+	Hand(Body::Joint mJoint, HandState mState){
+		joint = mJoint;
+		state = mState;
+	}
+};
+
 void testKinect2App::draw()
 {
 	gl::setViewport( getWindowBounds() );
@@ -115,23 +125,27 @@ void testKinect2App::drawBodies(){
 		gl::pushMatrices();
 		gl::scale(Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()));
 		gl::lineWidth(4.0f);
-
+		
 		for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
-			Body::Joint handLeftJoint = body.getJointMap().at(JointType_HandLeft);
-			if (body.getHandLeftState() == HandState_Closed) gl::color(255, 0, 0);
-			else if (body.getHandLeftState() == HandState_Lasso) gl::color(255, 255, 0);
-			else if (body.getHandLeftState() == HandState_Open) gl::color(0, 255, 0);
-			else  gl::color(ColorAf::white());
-			Vec2f pos = Kinect2::mapBodyCoordToColor(handLeftJoint.getPosition(), mDevice->getCoordinateMapper());
-			gl::drawStrokedCircle(pos, 14.0f, 32);
+			vector<Hand> mHands;
+			mHands.push_back(Hand(body.getJointMap().at(JointType_HandLeft), body.getHandLeftState()));
+			mHands.push_back(Hand(body.getJointMap().at(JointType_HandRight), body.getHandRightState()));
 
-			Body::Joint handRightJoint = body.getJointMap().at(JointType_HandRight);
-			if (body.getHandRightState() == HandState_Closed) gl::color(255, 0, 0);
-			else if (body.getHandRightState() == HandState_Lasso) gl::color(255, 255, 0);
-			else if (body.getHandRightState() == HandState_Open) gl::color(0, 255, 0);
-			else  gl::color(ColorAf::white());
-			pos = Kinect2::mapBodyCoordToColor(handRightJoint.getPosition(), mDevice->getCoordinateMapper());
-			gl::drawStrokedCircle(pos, 14.0f, 32);
+			for (const Hand& hand : mHands){
+				switch (hand.state){
+				case HandState_Closed:
+					gl::color(255, 0, 0);	 break;
+				case HandState_Lasso:
+					gl::color(255, 200, 0);	 break;
+				case HandState_Open:
+					gl::color(0, 255, 0);	 break;
+				default: gl::color(ColorAf::white());
+				}
+				Vec3f handPos = hand.joint.getPosition();
+				Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());
+				gl::drawStrokedCircle(pos, 40.0f / handPos.z, 32);
+			}
+
 			/*
 			for (const auto& joint : body.getJointMap()) {
 				Vec2f pos = Kinect2::mapBodyCoordToDepth(joint.second.getPosition(), mDevice->getCoordinateMapper());
