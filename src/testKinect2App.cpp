@@ -8,36 +8,6 @@
 
 using namespace Kinect2;
 
-class testKinect2App : public ci::app::AppBasic 
-{
-public:
-	void						draw();
-	void						prepareSettings( ci::app::AppBasic::Settings* settings );
-	void						setup();
-	void						update();
-	void						drawBodies();
-
-	std::vector<Body::Joint> 	handRight;
-	std::vector<Body::Joint> 	thumbRight;
-	std::vector<Body::Joint> 	handLeft;
-	std::vector<Body::Joint> 	thumbLeft;
-
-private:
-	Kinect2::DeviceRef			mDevice;
-	Kinect2::Frame				mFrame;
-
-	float						mFrameRate;
-	bool						mFullScreen;
-	ci::params::InterfaceGlRef	mParams;
-
-	Game						game;
-};
-
-#include "cinder/Font.h"
-
-using namespace ci;
-using namespace ci::app;
-using namespace std;
 
 struct Hand{
 	Body::Joint joint;
@@ -48,6 +18,41 @@ struct Hand{
 		state = mState;
 	}
 };
+
+class testKinect2App : public ci::app::AppBasic 
+{
+public:
+	void						draw();
+	void						prepareSettings( ci::app::AppBasic::Settings* settings );
+	void						setup();
+	void						update();
+	void						updateHands();
+	void						drawHands();
+
+
+private:
+	Kinect2::DeviceRef			mDevice;
+	Kinect2::Frame				mFrame;
+
+	float						mFrameRate;
+	bool						mFullScreen;
+	ci::params::InterfaceGlRef	mParams;
+
+	Game						game;
+
+	std::vector<Hand>			vHands;
+
+	//std::vector<Body::Joint> 	handRight;
+	//std::vector<Body::Joint> 	thumbRight;
+	//std::vector<Body::Joint> 	handLeft;
+	//std::vector<Body::Joint> 	thumbLeft;
+};
+
+#include "cinder/Font.h"
+
+using namespace ci;
+using namespace ci::app;
+using namespace std;
 
 void testKinect2App::draw()
 {
@@ -61,7 +66,7 @@ void testKinect2App::draw()
 		gl::draw(tex, tex->getBounds(), Rectf(getWindowBounds()));
 	}
 
-	drawBodies();
+	drawHands();
 	game.draw();
 	//Draw 4 Frames
 	/*
@@ -123,58 +128,61 @@ void testKinect2App::update()
 		mFrame = mDevice->getFrame();
 	}
 
-	game.update();
+	updateHands();
+	game.update(mFrame);
 }
 
-void testKinect2App::drawBodies(){
-	if (mFrame.getDepth() && mDevice) {
+void testKinect2App::updateHands(){
+	vHands.clear();
+	for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
+		vHands.push_back(Hand(body.getJointMap().at(JointType_HandLeft), body.getHandLeftState()));
+		vHands.push_back(Hand(body.getJointMap().at(JointType_HandRight), body.getHandRightState()));
+	}
+}
+
+void testKinect2App::drawHands(){
+	if (mFrame.getColor() && mDevice) {
 		gl::pushMatrices();
 		gl::scale(Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()));
 		gl::lineWidth(4.0f);
-		
-		for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
-			vector<Hand> mHands;
-			mHands.push_back(Hand(body.getJointMap().at(JointType_HandLeft), body.getHandLeftState()));
-			mHands.push_back(Hand(body.getJointMap().at(JointType_HandRight), body.getHandRightState()));
 
-			for (const Hand& hand : mHands){
-				switch (hand.state){
-					case HandState_Closed:
-						gl::color(1, 0, 0);	 break;
-					case HandState_Lasso:
-						gl::color(1, 0.7f, 0);	 break;
-					case HandState_Open:
-						gl::color(0, 1, 0);	 break;
-					default: 
-						gl::color(ColorAf::white());
-				}
-				Vec3f handPos = hand.joint.getPosition();
-				Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());
-				gl::drawStrokedCircle(pos, 40.0f / handPos.z, 32);
+		for (const Hand& hand : vHands){
+			switch (hand.state){
+				case HandState_Closed:
+					gl::color(1, 0, 0);	 break;
+				case HandState_Lasso:
+					gl::color(1, 0.7f, 0);	 break;
+				case HandState_Open:
+					gl::color(0, 1, 0);	 break;
+				default: 
+					gl::color(ColorAf::white());
 			}
-
-			/*
-			for (const auto& joint : body.getJointMap()) {
-				Vec2f pos = Kinect2::mapBodyCoordToDepth(joint.second.getPosition(), mDevice->getCoordinateMapper());
-				if (joint.first == JointType_HandLeft || joint.first == JointType_HandTipLeft || joint.first == JointType_ThumbLeft){
-					if (body.getHandLeftState() == HandState_Closed) gl::color(255, 0, 0);
-					else if (body.getHandLeftState() == HandState_Lasso) gl::color(255, 255, 0);
-					else if (body.getHandLeftState() == HandState_Open) gl::color(0, 255, 0);
-					else  gl::color(ColorAf::white());
-				}
-				else if (joint.first == JointType_HandRight || joint.first == JointType_HandTipRight || joint.first == JointType_ThumbRight){
-					if (body.getHandRightState() == HandState_Closed) gl::color(255, 0, 0);
-					else if (body.getHandRightState() == HandState_Lasso) gl::color(255, 255, 0);
-					else if (body.getHandRightState() == HandState_Open) gl::color(0, 255, 0);
-					else  gl::color(ColorAf::white());
-				}
-				else  gl::color(ColorAf::white());
-				gl::drawSolidCircle(pos, 7.0f, 32);
-				gl::color(Kinect2::getBodyColor(body.getIndex()));
-				gl::drawSolidCircle(pos, 5.0f, 32);
-			}
-			*/
+			Vec3f handPos = hand.joint.getPosition();
+			Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());
+			gl::drawStrokedCircle(pos, 40.0f / handPos.z, 32);
 		}
+
+		/*
+		for (const auto& joint : body.getJointMap()) {
+			Vec2f pos = Kinect2::mapBodyCoordToDepth(joint.second.getPosition(), mDevice->getCoordinateMapper());
+			if (joint.first == JointType_HandLeft || joint.first == JointType_HandTipLeft || joint.first == JointType_ThumbLeft){
+				if (body.getHandLeftState() == HandState_Closed) gl::color(255, 0, 0);
+				else if (body.getHandLeftState() == HandState_Lasso) gl::color(255, 255, 0);
+				else if (body.getHandLeftState() == HandState_Open) gl::color(0, 255, 0);
+				else  gl::color(ColorAf::white());
+			}
+			else if (joint.first == JointType_HandRight || joint.first == JointType_HandTipRight || joint.first == JointType_ThumbRight){
+				if (body.getHandRightState() == HandState_Closed) gl::color(255, 0, 0);
+				else if (body.getHandRightState() == HandState_Lasso) gl::color(255, 255, 0);
+				else if (body.getHandRightState() == HandState_Open) gl::color(0, 255, 0);
+				else  gl::color(ColorAf::white());
+			}
+			else  gl::color(ColorAf::white());
+			gl::drawSolidCircle(pos, 7.0f, 32);
+			gl::color(Kinect2::getBodyColor(body.getIndex()));
+			gl::drawSolidCircle(pos, 5.0f, 32);
+		}
+		*/
 		gl::popMatrices();
 	}
 }
