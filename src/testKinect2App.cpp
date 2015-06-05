@@ -25,6 +25,9 @@ private:
 
 	float						mFrameRate;
 	bool						mFullScreen;
+	bool						mShowHands;
+	bool						mIsGame;
+
 	ci::params::InterfaceGlRef	mParams;
 
 	Game						game;
@@ -55,7 +58,7 @@ void testKinect2App::draw()
 		gl::draw(tex, tex->getBounds(), Rectf(getWindowBounds()));
 	}
 
-	drawHands();
+	if (mShowHands) drawHands();
 	game.draw();
 	//Draw 4 Frames
 	/*
@@ -92,6 +95,7 @@ void testKinect2App::setup()
 	
 	mFrameRate	= 0.0f;
 	mFullScreen	= false;
+	mShowHands = true;
 
 	mDevice = Kinect2::Device::create();
 	mDevice->start( Kinect2::DeviceOptions().enableInfrared().enableBodyIndex().enableBody() );
@@ -99,6 +103,7 @@ void testKinect2App::setup()
 	mParams = params::InterfaceGl::create( "Params", Vec2i( 200, 100 ) );
 	mParams->addParam( "Frame rate",	&mFrameRate,				"", true );
 	mParams->addParam( "Full screen",	&mFullScreen,				"key=f" );
+	mParams->addParam("Show Hands", &mShowHands, "key=s");
 	mParams->addButton("Quit", bind(&testKinect2App::quit, this), "key=q");
 
 	game.setup();
@@ -122,19 +127,25 @@ void testKinect2App::update()
 }
 
 void testKinect2App::updateHands(){
-	vHands.clear();
-	for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
-		Body::Joint hand(body.getJointMap().at(JointType_HandLeft));
-		Vec3f handPos = hand.getPosition();
-		Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());
-		pos = pos * Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()); //Scale
-		vHands.push_back(Hand(pos, handPos.z, body.getHandLeftState()));
-		
-		hand = body.getJointMap().at(JointType_HandRight);
-		pos = Kinect2::mapBodyCoordToColor(hand.getPosition(), mDevice->getCoordinateMapper());
-		pos = pos * Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()); //Scale
-		vHands.push_back(Hand(pos, handPos.z, body.getHandRightState()));
-		
+	if (mFrame.getColor()){
+		vHands.clear();
+		Vec2f scale = Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize());
+
+		for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
+			//Get Left Hand pos + state
+			Body::Joint hand(body.getJointMap().at(JointType_HandLeft));
+			Vec3f handPos = hand.getPosition();
+			Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());
+			pos *= scale;
+			vHands.push_back(Hand(pos, handPos.z, body.getHandLeftState()));
+
+			//Get Right Hand pos + state
+			hand = body.getJointMap().at(JointType_HandRight);
+			pos = Kinect2::mapBodyCoordToColor(hand.getPosition(), mDevice->getCoordinateMapper());
+			pos *= scale;
+			vHands.push_back(Hand(pos, handPos.z, body.getHandRightState()));
+
+		}
 	}
 }
 
