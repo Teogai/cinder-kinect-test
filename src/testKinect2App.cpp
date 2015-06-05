@@ -10,11 +10,13 @@ using namespace Kinect2;
 
 
 struct Hand{
-	Body::Joint joint;
-	HandState state;
+	ci::Vec2f	pos;
+	float		depth;
+	HandState	state;
 
-	Hand(Body::Joint mJoint, HandState mState){
-		joint = mJoint;
+	Hand(ci::Vec2f mPos, float mDepth, HandState mState){
+		pos = mPos;
+		depth = mDepth;
 		state = mState;
 	}
 };
@@ -135,8 +137,14 @@ void testKinect2App::update()
 void testKinect2App::updateHands(){
 	vHands.clear();
 	for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
-		vHands.push_back(Hand(body.getJointMap().at(JointType_HandLeft), body.getHandLeftState()));
-		vHands.push_back(Hand(body.getJointMap().at(JointType_HandRight), body.getHandRightState()));
+		Body::Joint hand(body.getJointMap().at(JointType_HandLeft));
+		Vec3f handPos = hand.getPosition();
+		Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());
+		vHands.push_back(Hand(pos, handPos.z, body.getHandLeftState()));
+
+		hand = body.getJointMap().at(JointType_HandRight);
+		pos = Kinect2::mapBodyCoordToColor(hand.getPosition(), mDevice->getCoordinateMapper());
+		vHands.push_back(Hand(pos, handPos.z, body.getHandRightState()));
 	}
 }
 
@@ -157,32 +165,9 @@ void testKinect2App::drawHands(){
 				default: 
 					gl::color(ColorAf::white());
 			}
-			Vec3f handPos = hand.joint.getPosition();
-			Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());
-			gl::drawStrokedCircle(pos, 40.0f / handPos.z, 32);
-		}
 
-		/*
-		for (const auto& joint : body.getJointMap()) {
-			Vec2f pos = Kinect2::mapBodyCoordToDepth(joint.second.getPosition(), mDevice->getCoordinateMapper());
-			if (joint.first == JointType_HandLeft || joint.first == JointType_HandTipLeft || joint.first == JointType_ThumbLeft){
-				if (body.getHandLeftState() == HandState_Closed) gl::color(255, 0, 0);
-				else if (body.getHandLeftState() == HandState_Lasso) gl::color(255, 255, 0);
-				else if (body.getHandLeftState() == HandState_Open) gl::color(0, 255, 0);
-				else  gl::color(ColorAf::white());
-			}
-			else if (joint.first == JointType_HandRight || joint.first == JointType_HandTipRight || joint.first == JointType_ThumbRight){
-				if (body.getHandRightState() == HandState_Closed) gl::color(255, 0, 0);
-				else if (body.getHandRightState() == HandState_Lasso) gl::color(255, 255, 0);
-				else if (body.getHandRightState() == HandState_Open) gl::color(0, 255, 0);
-				else  gl::color(ColorAf::white());
-			}
-			else  gl::color(ColorAf::white());
-			gl::drawSolidCircle(pos, 7.0f, 32);
-			gl::color(Kinect2::getBodyColor(body.getIndex()));
-			gl::drawSolidCircle(pos, 5.0f, 32);
+			gl::drawStrokedCircle(hand.pos, 40.0f / hand.depth, 32);
 		}
-		*/
 		gl::popMatrices();
 	}
 }
