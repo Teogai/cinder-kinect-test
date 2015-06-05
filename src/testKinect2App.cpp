@@ -8,19 +8,6 @@
 
 using namespace Kinect2;
 
-
-struct Hand{
-	ci::Vec2f	pos;
-	float		depth;
-	HandState	state;
-
-	Hand(ci::Vec2f mPos, float mDepth, HandState mState){
-		pos = mPos;
-		depth = mDepth;
-		state = mState;
-	}
-};
-
 class testKinect2App : public ci::app::AppBasic 
 {
 public:
@@ -131,7 +118,7 @@ void testKinect2App::update()
 	}
 
 	updateHands();
-	game.update(mFrame);
+	game.update(vHands);
 }
 
 void testKinect2App::updateHands(){
@@ -140,18 +127,21 @@ void testKinect2App::updateHands(){
 		Body::Joint hand(body.getJointMap().at(JointType_HandLeft));
 		Vec3f handPos = hand.getPosition();
 		Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());
+		pos = pos * Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()); //Scale
 		vHands.push_back(Hand(pos, handPos.z, body.getHandLeftState()));
-
+		
 		hand = body.getJointMap().at(JointType_HandRight);
 		pos = Kinect2::mapBodyCoordToColor(hand.getPosition(), mDevice->getCoordinateMapper());
+		pos = pos * Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()); //Scale
 		vHands.push_back(Hand(pos, handPos.z, body.getHandRightState()));
+		
 	}
 }
 
 void testKinect2App::drawHands(){
 	if (mFrame.getColor() && mDevice) {
 		gl::pushMatrices();
-		gl::scale(Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()));
+		//gl::scale(Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()));
 		gl::lineWidth(4.0f);
 
 		for (const Hand& hand : vHands){

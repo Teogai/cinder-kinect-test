@@ -17,14 +17,26 @@ struct Ball{
 	}
 };
 
+struct Hand{
+	ci::Vec2f	pos;
+	float		depth;
+	HandState	state;
+
+	Hand(ci::Vec2f mPos, float mDepth, HandState mState){
+		pos = mPos;
+		depth = mDepth;
+		state = mState;
+	}
+};
+
 class Game{
 public:
 	void	setup();
-	void	update(Kinect2::Frame mFrame);
+	void	update(std::vector<Hand> mHands);
 	void	draw();
+	float	distVec2f(ci::Vec2f a, ci::Vec2f b);
 
 private:
 	std::vector<Ball>	vBall;
-	Kinect2::Frame		mFrame;
-
+	std::vector<Hand>		vHands;
 };
