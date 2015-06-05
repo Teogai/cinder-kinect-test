@@ -113,9 +113,26 @@ void testKinect2App::update()
 void testKinect2App::drawBodies(){
 	if (mFrame.getDepth() && mDevice) {
 		gl::pushMatrices();
-		gl::scale(Vec2f(getWindowSize()) / Vec2f(mFrame.getDepth().getSize()));
+		gl::scale(Vec2f(getWindowSize()) / Vec2f(mFrame.getColor().getSize()));
+		gl::lineWidth(4.0f);
 
 		for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
+			Body::Joint handLeftJoint = body.getJointMap().at(JointType_HandLeft);
+			if (body.getHandLeftState() == HandState_Closed) gl::color(255, 0, 0);
+			else if (body.getHandLeftState() == HandState_Lasso) gl::color(255, 255, 0);
+			else if (body.getHandLeftState() == HandState_Open) gl::color(0, 255, 0);
+			else  gl::color(ColorAf::white());
+			Vec2f pos = Kinect2::mapBodyCoordToColor(handLeftJoint.getPosition(), mDevice->getCoordinateMapper());
+			gl::drawStrokedCircle(pos, 14.0f, 32);
+
+			Body::Joint handRightJoint = body.getJointMap().at(JointType_HandRight);
+			if (body.getHandRightState() == HandState_Closed) gl::color(255, 0, 0);
+			else if (body.getHandRightState() == HandState_Lasso) gl::color(255, 255, 0);
+			else if (body.getHandRightState() == HandState_Open) gl::color(0, 255, 0);
+			else  gl::color(ColorAf::white());
+			pos = Kinect2::mapBodyCoordToColor(handRightJoint.getPosition(), mDevice->getCoordinateMapper());
+			gl::drawStrokedCircle(pos, 14.0f, 32);
+			/*
 			for (const auto& joint : body.getJointMap()) {
 				Vec2f pos = Kinect2::mapBodyCoordToDepth(joint.second.getPosition(), mDevice->getCoordinateMapper());
 				if (joint.first == JointType_HandLeft || joint.first == JointType_HandTipLeft || joint.first == JointType_ThumbLeft){
@@ -135,6 +152,7 @@ void testKinect2App::drawBodies(){
 				gl::color(Kinect2::getBodyColor(body.getIndex()));
 				gl::drawSolidCircle(pos, 5.0f, 32);
 			}
+			*/
 		}
 		gl::popMatrices();
 	}
