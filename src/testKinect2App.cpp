@@ -14,7 +14,7 @@ public:
 	void						prepareSettings( ci::app::AppBasic::Settings* settings );
 	void						setup();
 	void						update();
-	void						drawHands();
+	void						drawBodies();
 
 	std::vector<Kinect2::Body::Joint> 			handRight;
 	std::vector<Kinect2::Body::Joint> 			thumbRight;
@@ -39,15 +39,16 @@ using namespace std;
 void testKinect2App::draw()
 {
 	gl::setViewport( getWindowBounds() );
-	gl::clear();
-	gl::setMatricesWindow( getWindowSize() );
+	gl::clear(Colorf::black());
 	gl::enableAlphaBlending();
+	gl::color(ColorAf::white());
 
 	if (mFrame.getColor()) {
 		gl::TextureRef tex = gl::Texture::create(mFrame.getColor());
-		gl::draw(tex, tex->getBounds(), Rectf(Vec2f::zero(), getWindowSize()));
+		gl::draw(tex, tex->getBounds(), Rectf(getWindowBounds()));
 	}
-	drawHands();
+
+	drawBodies();
 
 	//Draw 4 Frames
 	/*
@@ -109,7 +110,7 @@ void testKinect2App::update()
 	}
 }
 
-void testKinect2App::drawHands(){
+void testKinect2App::drawBodies(){
 	if (mFrame.getDepth() && mDevice) {
 		gl::pushMatrices();
 		gl::scale(Vec2f(getWindowSize()) / Vec2f(mFrame.getDepth().getSize()));
@@ -117,7 +118,19 @@ void testKinect2App::drawHands(){
 		for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
 			for (const auto& joint : body.getJointMap()) {
 				Vec2f pos = Kinect2::mapBodyCoordToDepth(joint.second.getPosition(), mDevice->getCoordinateMapper());
-				gl::color(ColorAf::white());
+				if (joint.first == JointType_HandLeft || joint.first == JointType_HandTipLeft || joint.first == JointType_ThumbLeft){
+					if (body.getHandLeftState() == HandState_Closed) gl::color(255, 0, 0);
+					else if (body.getHandLeftState() == HandState_Lasso) gl::color(255, 255, 0);
+					else if (body.getHandLeftState() == HandState_Open) gl::color(0, 255, 0);
+					else  gl::color(ColorAf::white());
+				}
+				else if (joint.first == JointType_HandRight || joint.first == JointType_HandTipRight || joint.first == JointType_ThumbRight){
+					if (body.getHandRightState() == HandState_Closed) gl::color(255, 0, 0);
+					else if (body.getHandRightState() == HandState_Lasso) gl::color(255, 255, 0);
+					else if (body.getHandRightState() == HandState_Open) gl::color(0, 255, 0);
+					else  gl::color(ColorAf::white());
+				}
+				else  gl::color(ColorAf::white());
 				gl::drawSolidCircle(pos, 7.0f, 32);
 				gl::color(Kinect2::getBodyColor(body.getIndex()));
 				gl::drawSolidCircle(pos, 5.0f, 32);

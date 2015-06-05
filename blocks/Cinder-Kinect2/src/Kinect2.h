@@ -133,13 +133,14 @@ public:
 		const ci::Quatf&						getOrientation() const;
 		const ci::Vec3f&						getPosition() const;
 		TrackingState							getTrackingState() const;
+
 	protected:
 		Joint( const ci::Vec3f& position, const ci::Quatf& orientation, TrackingState trackingState );
 		
 		ci::Quatf								mOrientation;
 		ci::Vec3f								mPosition;
 		TrackingState							mTrackingState;
-
+		
 		friend class							Device;
 	};
 
@@ -150,14 +151,20 @@ public:
 	uint64_t									getId() const;
 	uint8_t										getIndex() const;
 	const std::map<JointType, Body::Joint>&		getJointMap() const;
+	HandState									getHandLeftState() const;
+	HandState									getHandRightState() const;
 	bool										isTracked() const;
+
 private:
-	Body( uint64_t id, uint8_t index, const std::map<JointType, Body::Joint>& jointMap );
+	Body(uint64_t id, uint8_t index, const std::map<JointType, Body::Joint>& jointMap, HandState handLeftState, HandState handRightState);
 
 	uint64_t									mId;
 	uint8_t										mIndex;
 	std::map<JointType, Body::Joint>			mJointMap;
 	bool										mTracked;
+	HandState									mHandLeftState;
+	HandState									mHandRightState;
+
 
 	friend class								Device;
 };

@@ -384,8 +384,8 @@ Body::Body()
 {
 }
 
-Body::Body( uint64_t id, uint8_t index, const map<JointType, Body::Joint>& jointMap )
-: mId( id ), mIndex( index ), mJointMap( jointMap ), mTracked( true )
+Body::Body(uint64_t id, uint8_t index, const map<JointType, Body::Joint>& jointMap, HandState handLeftState, HandState handRightState)
+: mId(id), mIndex(index), mJointMap(jointMap), mTracked(true), mHandLeftState(handLeftState), mHandRightState(handRightState)
 {
 }
 
@@ -457,6 +457,15 @@ bool Body::isTracked() const
 	return mTracked; 
 }
 
+HandState Body::getHandLeftState() const
+{
+	return mHandLeftState;
+}
+
+HandState Body::getHandRightState() const
+{
+	return mHandRightState;
+}
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 Frame::Frame()
@@ -813,6 +822,12 @@ void Device::update()
 							uint64_t id = 0;
 							kinectBody->get_TrackingId( &id );
 
+							HandState handLeftState;
+							kinectBody->get_HandLeftState(&handLeftState);
+
+							HandState handRightState;
+							kinectBody->get_HandRightState(&handRightState);
+
 							std::map<JointType, Body::Joint> jointMap;
 							for ( int32_t j = 0; j < JointType_Count; ++j ) {
 								Body::Joint joint( 
@@ -822,7 +837,7 @@ void Device::update()
 									);
 								jointMap.insert( pair<JointType, Body::Joint>( static_cast<JointType>( j ), joint ) );
 							}
-							Body body( id, i, jointMap );
+							Body body(id, i, jointMap, handLeftState, handRightState);
 							bodies.push_back( body );
 						}
 					}

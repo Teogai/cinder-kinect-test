@@ -186,7 +186,7 @@ xcopy /y "..\..\cinder_0.8.6_vc2013\lib\msw\x86\d3dcompiler_46.dll" "$(OutDir)"<
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;"..\..\cinder_0.8.6_vc2013\include";..\blocks\Cinder-Kinect2\src;$(KINECTSDK20_DIR)\inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\cinder_0.8.6_vc2013\boost;..\..\cinder_0.8.6_vc2013\include;..\blocks\Cinder-Kinect2\src;$(KINECTSDK20_DIR)\inc</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOMINMAX;_WIN32_WINNT=0x0502;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
