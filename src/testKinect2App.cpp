@@ -4,6 +4,7 @@
 #include "cinder/params/Params.h"
 
 #include "Kinect2.h"
+#include "Game.h"
 
 using namespace Kinect2;
 
@@ -16,10 +17,10 @@ public:
 	void						update();
 	void						drawBodies();
 
-	std::vector<Kinect2::Body::Joint> 			handRight;
-	std::vector<Kinect2::Body::Joint> 			thumbRight;
-	std::vector<Kinect2::Body::Joint> 			handLeft;
-	std::vector<Kinect2::Body::Joint> 			thumbLeft;
+	std::vector<Body::Joint> 	handRight;
+	std::vector<Body::Joint> 	thumbRight;
+	std::vector<Body::Joint> 	handLeft;
+	std::vector<Body::Joint> 	thumbLeft;
 
 private:
 	Kinect2::DeviceRef			mDevice;
@@ -28,6 +29,8 @@ private:
 	float						mFrameRate;
 	bool						mFullScreen;
 	ci::params::InterfaceGlRef	mParams;
+
+	Game						game;
 };
 
 #include "cinder/Font.h"
@@ -59,7 +62,7 @@ void testKinect2App::draw()
 	}
 
 	drawBodies();
-
+	game.draw();
 	//Draw 4 Frames
 	/*
 	if ( mFrame.getColor() ) {
@@ -104,6 +107,7 @@ void testKinect2App::setup()
 	mParams->addParam( "Full screen",	&mFullScreen,				"key=f" );
 	mParams->addButton("Quit", bind(&testKinect2App::quit, this), "key=q");
 
+	game.setup();
 }
 
 void testKinect2App::update()
@@ -118,6 +122,8 @@ void testKinect2App::update()
 	if ( mDevice && mDevice->getFrame().getTimeStamp() > mFrame.getTimeStamp() ) {
 		mFrame = mDevice->getFrame();
 	}
+
+	game.update();
 }
 
 void testKinect2App::drawBodies(){
@@ -133,13 +139,14 @@ void testKinect2App::drawBodies(){
 
 			for (const Hand& hand : mHands){
 				switch (hand.state){
-				case HandState_Closed:
-					gl::color(255, 0, 0);	 break;
-				case HandState_Lasso:
-					gl::color(255, 200, 0);	 break;
-				case HandState_Open:
-					gl::color(0, 255, 0);	 break;
-				default: gl::color(ColorAf::white());
+					case HandState_Closed:
+						gl::color(1, 0, 0);	 break;
+					case HandState_Lasso:
+						gl::color(1, 0.7f, 0);	 break;
+					case HandState_Open:
+						gl::color(0, 1, 0);	 break;
+					default: 
+						gl::color(ColorAf::white());
 				}
 				Vec3f handPos = hand.joint.getPosition();
 				Vec2f pos = Kinect2::mapBodyCoordToColor(handPos, mDevice->getCoordinateMapper());

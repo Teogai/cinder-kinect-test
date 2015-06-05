@@ -272,10 +272,12 @@ xcopy /y "..\..\cinder_0.8.6_vc2013\lib\msw\x86\d3dcompiler_46.dll" "$(OutDir)"<
   <ItemGroup />
   <ItemGroup />
   <ItemGroup>
+    <ClInclude Include="..\include\Game.h" />
     <ClInclude Include="..\include\Resources.h" />
     <ClInclude Include="..\blocks\Cinder-Kinect2\src\Kinect2.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Game.cpp" />
     <ClCompile Include="..\src\testKinect2App.cpp" />
     <ClCompile Include="..\blocks\Cinder-Kinect2\src\Kinect2.cpp" />
   </ItemGroup>
