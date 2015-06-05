@@ -14,7 +14,6 @@ public:
 	void						prepareSettings( ci::app::AppBasic::Settings* settings );
 	void						setup();
 	void						update();
-	void						getHands();
 	void						drawHands();
 
 	std::vector<Kinect2::Body::Joint> 			handRight;
@@ -108,61 +107,24 @@ void testKinect2App::update()
 	if ( mDevice && mDevice->getFrame().getTimeStamp() > mFrame.getTimeStamp() ) {
 		mFrame = mDevice->getFrame();
 	}
-
-	//getHands();
 }
-	
-void testKinect2App::getHands(){
-	handRight.clear();
-	handLeft.clear();
-	
-	//thumbRight.clear();
-	//thumbLeft.clear();
-
-	mFrame = mDevice->getFrame();
-	vector<Body> vBodies = mFrame.getBodies();
-	for (size_t i = 0; i < vBodies.size();i++){
-		Body body = vBodies[i];
-		if (body.isTracked())
-		{
-			// Find the joints
-			handRight.push_back(body.getJointMap().at(JointType_HandRight));
-			handLeft.push_back(body.getJointMap().at(JointType_HandLeft));
-
-			//thumbRight.push_back(body.getJointMap().at(JointType_ThumbRight));
-			//thumbLeft.push_back(body.getJointMap().at(JointType_ThumbLeft));
-		}
-	}
-}
-
 
 void testKinect2App::drawHands(){
-	
+	if (mFrame.getDepth() && mDevice) {
+		gl::pushMatrices();
+		gl::scale(Vec2f(getWindowSize()) / Vec2f(mFrame.getDepth().getSize()));
 
-	gl::color(255, 255, 255);
-	for (size_t i = 0; i < handRight.size(); i++){
-		Vec2f pos = Kinect2::mapBodyCoordToDepth(handRight[i].getPosition(), mDevice->getCoordinateMapper());
-		gl::color(ColorAf::white());
-		gl::drawSolidCircle(pos, 7.0f, 32);
+		for (const Kinect2::Body& body : mDevice->getFrame().getBodies()) {
+			for (const auto& joint : body.getJointMap()) {
+				Vec2f pos = Kinect2::mapBodyCoordToDepth(joint.second.getPosition(), mDevice->getCoordinateMapper());
+				gl::color(ColorAf::white());
+				gl::drawSolidCircle(pos, 7.0f, 32);
+				gl::color(Kinect2::getBodyColor(body.getIndex()));
+				gl::drawSolidCircle(pos, 5.0f, 32);
+			}
+		}
+		gl::popMatrices();
 	}
-	for (size_t i = 0; i < handLeft.size(); i++){
-		Vec2f pos = Kinect2::mapBodyCoordToDepth(handLeft[i].getPosition(), mDevice->getCoordinateMapper());
-		gl::color(ColorAf::white());
-		gl::drawSolidCircle(pos, 7.0f, 32);
-	}
-	
-	/*
-	for (size_t i = 0; i < thumbRight.size(); i++){
-		Vec3f pos = thumbRight[i].getPosition();
-		Vec2f out = Vec2f(pos.x, -pos.y) * Vec2f(getWindowSize()) + Vec2f(getWindowCenter());
-		gl::drawStrokedCircle(out, 20);
-	}
-	for (size_t i = 0; i < thumbLeft.size(); i++){
-		Vec3f pos = thumbLeft[i].getPosition();
-		Vec2f out = Vec2f(pos.x, -pos.y) * Vec2f(getWindowSize()) + Vec2f(getWindowCenter());
-		gl::drawStrokedCircle(out, 20);
-	}
-	*/
 }
 
 CINDER_APP_BASIC(testKinect2App, RendererGl)
