@@ -8,9 +8,8 @@ using namespace std;
 
 void Game::setup(){
 	Rand::randSeed(time(NULL));
-	vBall.push_back(Ball());
-	vBall.push_back(Ball());
-	vBall.push_back(Ball());
+	for (int i = 0; i < 10; i++)
+		vBall.push_back(Ball());
 }
 
 void Game::update(vector<Hand> mHands){
